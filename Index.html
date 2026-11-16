@@ -1,0 +1,1209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VHM Hive Planner — Virtus Humilis</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      /* Put your logo filename/URL here if hosting on a website */
+      --vhm-logo: url('vhm-logo.png');
+
+      --bg-obsidian: #070709;
+      --panel-bg: rgba(16, 16, 21, 0.86);
+      --panel-inner: rgba(10, 10, 14, 0.88);
+      --gold: #d4af37;
+      --gold-bright: #f3d27a;
+      --gold-dim: rgba(212, 175, 55, 0.28);
+      --border: rgba(212, 175, 55, 0.25);
+      --text: #f3efe6;
+      --muted: #a39b8b;
+      --cell: 28px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 18px;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background-color: var(--bg-obsidian);
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* Full-page Alliance Logo Backdrop with Dark Vignette */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -2;
+      background-image: var(--vhm-logo);
+      background-position: center center;
+      background-size: cover;
+      background-repeat: no-repeat;
+      filter: contrast(1.08) brightness(0.42);
+    }
+
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      background: radial-gradient(circle at center, rgba(10, 10, 14, 0.45) 0%, rgba(5, 5, 7, 0.92) 85%);
+      pointer-events: none;
+    }
+
+    #vhm-planner-app {
+      max-width: 1360px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    /* Header Crest Banner */
+    .vhm-header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 20px;
+      background: linear-gradient(135deg, rgba(22, 20, 26, 0.92), rgba(10, 10, 14, 0.94));
+      border: 1px solid var(--gold-dim);
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(243, 210, 122, 0.15);
+      backdrop-filter: blur(10px);
+    }
+
+    .brand-box {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand-crest {
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      border: 2px solid var(--gold);
+      background-color: #0b0b0f;
+      background-image: var(--vhm-logo);
+      background-size: cover;
+      background-position: center;
+      box-shadow: 0 0 16px rgba(212, 175, 55, 0.35);
+      flex-shrink: 0;
+    }
+
+    .brand-title h1 {
+      margin: 0;
+      font-family: 'Cinzel', Georgia, serif;
+      font-size: 1.45rem;
+      letter-spacing: 0.08em;
+      background: linear-gradient(180deg, #fff5d6 0%, #d4af37 55%, #9c7422 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-transform: uppercase;
+    }
+
+    .brand-title p {
+      margin: 2px 0 0;
+      font-family: 'Cinzel', Georgia, serif;
+      font-size: 0.74rem;
+      letter-spacing: 0.22em;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+
+    .header-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    /* Buttons & Inputs */
+    button {
+      background: rgba(28, 28, 36, 0.92);
+      color: var(--text);
+      border: 1px solid rgba(212, 175, 55, 0.32);
+      border-radius: 7px;
+      padding: 8px 13px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.16s ease;
+    }
+    button:hover {
+      background: rgba(45, 42, 54, 0.96);
+      border-color: var(--gold);
+      box-shadow: 0 0 10px rgba(212, 175, 55, 0.18);
+    }
+
+    button.gold-btn {
+      background: linear-gradient(180deg, #d4af37, #9e781f);
+      color: #110e07;
+      border-color: #f3d27a;
+      font-weight: 700;
+    }
+    button.gold-btn:hover {
+      background: linear-gradient(180deg, #e5c352, #b58c28);
+      box-shadow: 0 0 14px rgba(212, 175, 55, 0.4);
+    }
+
+    button.danger-btn {
+      background: rgba(127, 29, 29, 0.85);
+      border-color: rgba(248, 113, 113, 0.45);
+      color: #fee2e2;
+    }
+    button.danger-btn:hover {
+      background: rgba(185, 28, 28, 0.95);
+      border-color: #fca5a5;
+    }
+
+    input[type="number"], input[type="text"], select {
+      background: var(--panel-inner);
+      color: var(--text);
+      border: 1px solid rgba(212, 175, 55, 0.25);
+      border-radius: 6px;
+      padding: 7px 9px;
+      font-size: 0.84rem;
+      outline: none;
+    }
+    input[type="number"]:focus, input[type="text"]:focus, select:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.15);
+    }
+    input[type="number"] { width: 64px; }
+
+    /* Variation Tabs */
+    .tabs-bar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 10px;
+    }
+
+    .tab-btn {
+      background: var(--panel-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 11px 14px;
+      text-align: left;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      backdrop-filter: blur(8px);
+    }
+    .tab-btn .tab-name {
+      font-family: 'Cinzel', Georgia, serif;
+      font-size: 0.9rem;
+      color: var(--text);
+      letter-spacing: 0.03em;
+    }
+    .tab-btn small {
+      color: var(--muted);
+      font-weight: 500;
+      font-size: 0.74rem;
+    }
+    .tab-btn.active {
+      background: linear-gradient(135deg, rgba(212, 175, 55, 0.24), rgba(22, 20, 26, 0.95));
+      border-color: var(--gold);
+      box-shadow: 0 0 18px rgba(212, 175, 55, 0.2), inset 0 1px 0 rgba(243, 210, 122, 0.3);
+    }
+    .tab-btn.active .tab-name { color: var(--gold-bright); }
+    .tab-btn.bf-tab.active {
+      background: linear-gradient(135deg, rgba(168, 85, 247, 0.24), rgba(22, 20, 26, 0.95));
+      border-color: #c084fc;
+      box-shadow: 0 0 18px rgba(168, 85, 247, 0.22);
+    }
+    .tab-btn.bf-tab.active .tab-name { color: #e9d5ff; }
+
+    /* Workspace */
+    .workspace {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+
+    .sidebar {
+      width: 308px;
+      flex-shrink: 0;
+      background: var(--panel-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 15px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.55);
+    }
+
+    .section-title {
+      font-family: 'Cinzel', Georgia, serif;
+      font-size: 0.76rem;
+      letter-spacing: 0.1em;
+      color: var(--gold);
+      margin-bottom: 8px;
+      border-bottom: 1px solid rgba(212, 175, 55, 0.16);
+      padding-bottom: 4px;
+      text-transform: uppercase;
+    }
+
+    .tool-list {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 7px;
+    }
+    .tool-btn {
+      text-align: left;
+      padding: 9px 10px;
+      font-size: 0.81rem;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      background: var(--panel-inner);
+    }
+    .tool-btn small { color: var(--muted); font-weight: 400; font-size: 0.7rem; }
+    .tool-btn.active {
+      border-color: var(--gold-bright);
+      background: rgba(212, 175, 55, 0.16);
+      box-shadow: inset 0 0 0 1px var(--gold);
+    }
+
+    .field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 9px; }
+    .field label { font-size: 0.77rem; color: var(--muted); }
+
+    .inspector-box {
+      background: var(--panel-inner);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      padding: 11px;
+    }
+
+    .status-msg { font-size: 0.8rem; color: var(--gold-bright); min-height: 18px; font-weight: 500; }
+
+    /* Board Panel */
+    .board-panel {
+      flex: 1;
+      min-width: 330px;
+      background: var(--panel-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.55);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .board-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(212, 175, 55, 0.16);
+    }
+    .toolbar-group { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    .dim-label { font-size: 0.81rem; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+
+    .board-scroll {
+      overflow: auto;
+      max-height: 74vh;
+      padding: 4px;
+    }
+
+    .grid-frame {
+      display: inline-grid;
+      grid-template-columns: 28px auto;
+      grid-template-rows: 22px auto;
+      user-select: none;
+    }
+    .axis-x { grid-column: 2; grid-row: 1; display: flex; }
+    .axis-y { grid-column: 1; grid-row: 2; display: flex; flex-direction: column; }
+    .axis-cell {
+      width: var(--cell);
+      height: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.68rem;
+      color: rgba(212, 175, 55, 0.72);
+      font-family: monospace;
+    }
+    .axis-y .axis-cell { width: 28px; height: var(--cell); }
+
+    .grid-canvas {
+      grid-column: 2;
+      grid-row: 2;
+      position: relative;
+      background-color: rgba(8, 9, 13, 0.92);
+      background-image:
+        linear-gradient(to right, rgba(212, 175, 55, 0.14) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(212, 175, 55, 0.14) 1px, transparent 1px);
+      background-size: var(--cell) var(--cell);
+      border: 1px solid rgba(212, 175, 55, 0.5);
+      box-shadow: 0 0 24px rgba(0, 0, 0, 0.8);
+      touch-action: none;
+    }
+
+    /* Placed Buildings */
+    .building {
+      position: absolute;
+      border-radius: 5px;
+      border: 2px solid rgba(255, 255, 255, 0.72);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 2px;
+      cursor: grab;
+      overflow: hidden;
+      font-weight: 700;
+      color: #fff;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95);
+      z-index: 2;
+    }
+    .building:active { cursor: grabbing; }
+    .building.locked { cursor: pointer; }
+    .building.selected { box-shadow: 0 0 0 3px #fde047, 0 0 14px rgba(250, 204, 21, 0.6); z-index: 5; }
+    .building .b-name { font-size: 0.73rem; line-height: 1.1; word-break: break-word; max-width: 100%; }
+    .building .b-meta { font-size: 0.61rem; opacity: 0.92; font-weight: 500; }
+
+    .type-castle {
+      background: linear-gradient(135deg, rgba(212, 175, 55, 0.94), rgba(138, 92, 18, 0.96));
+      border-color: #fef08a;
+      color: #161005;
+      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35);
+    }
+    .type-keep.rank-R5 { background: rgba(185, 28, 28, 0.88); border-color: #fca5a5; }
+    .type-keep.rank-R4 { background: rgba(194, 102, 12, 0.88); border-color: #fcd34d; }
+    .type-keep.rank-Member { background: rgba(29, 78, 216, 0.86); border-color: #93c5fd; }
+    .type-keep.rank-Farm { background: rgba(21, 128, 61, 0.86); border-color: #86efac; }
+    .type-warehouse { background: rgba(126, 34, 206, 0.9); border-color: #e9d5ff; }
+    .type-mine { background: rgba(15, 118, 110, 0.9); border-color: #5eead4; }
+    .type-terrain {
+      background: repeating-linear-gradient(45deg, #27272a, #27272a 5px, #18181b 5px, #18181b 10px);
+      border-color: #71717a;
+    }
+
+    .ghost {
+      position: absolute;
+      pointer-events: none;
+      border-radius: 5px;
+      border: 2px dashed #4ade80;
+      background: rgba(74, 222, 128, 0.25);
+      z-index: 10;
+      display: none;
+    }
+    .ghost.invalid { border-color: #f87171; background: rgba(248, 113, 113, 0.32); }
+
+    .stats-bar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 0.8rem;
+      color: var(--muted);
+      padding-top: 8px;
+      border-top: 1px solid rgba(212, 175, 55, 0.16);
+    }
+    .stats-group { display: flex; flex-wrap: wrap; gap: 14px; }
+    .stats-group strong { color: var(--gold-bright); }
+
+    /* Member Roster Chips */
+    .roster-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+    }
+    .roster-chip {
+      font-size: 0.75rem;
+      padding: 4px 9px;
+      border-radius: 999px;
+      background: rgba(18, 18, 24, 0.9);
+      border: 1px solid rgba(212, 175, 55, 0.28);
+      color: var(--text);
+      cursor: pointer;
+    }
+    .roster-chip:hover, .roster-chip.active {
+      border-color: var(--gold-bright);
+      background: rgba(212, 175, 55, 0.22);
+    }
+  </style>
+</head>
+<body>
+  <div id="vhm-planner-app">
+    <!-- Header -->
+    <header class="vhm-header">
+      <div class="brand-box">
+        <div class="brand-crest" title="VHM Alliance Crest"></div>
+        <div class="brand-title">
+          <h1>VHM Hive Planner</h1>
+          <p>Virtus Humilis • Alliance Tactical Layout</p>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <input type="file" id="logoFileInput" accept="image/*" style="display:none;" />
+        <button id="setLogoBtn" title="Choose your logo image from your device">Set Logo</button>
+        <button class="gold-btn" id="shareBtn">Copy Share Link</button>
+        <button id="exportBtn">Export JSON</button>
+        <button id="importBtn">Import JSON</button>
+      </div>
+    </header>
+
+    <!-- 4 Tabs -->
+    <div class="tabs-bar" id="tabsBar">
+      <button class="tab-btn active" data-tab="lvl13">
+        <span class="tab-name">Standard Hive (Lv 1–3)</span>
+        <small>18×18 Grid • 2×2 Centre • 320 Tiles</small>
+      </button>
+      <button class="tab-btn" data-tab="lvl4">
+        <span class="tab-name">Chalons / Glory (Lv 4)</span>
+        <small>20×20 Grid • 4×4 Centre • 384 Tiles</small>
+      </button>
+      <button class="tab-btn" data-tab="lvl5">
+        <span class="tab-name">Upgraded Chalons / Glory (Lv 5)</span>
+        <small>22×22 Grid • 4×4 Centre • 468 Tiles</small>
+      </button>
+      <button class="tab-btn bf-tab" data-tab="bf">
+        <span class="tab-name">BF Hive Plan (Custom)</span>
+        <small>Custom Grid Size • Free Layout</small>
+      </button>
+    </div>
+
+    <!-- Main Workspace -->
+    <div class="workspace">
+      <!-- Left Sidebar -->
+      <aside class="sidebar">
+        <div>
+          <div class="section-title">1. Placement Tool</div>
+          <div class="tool-list" id="toolList">
+            <button class="tool-btn active" data-tool="keep2">Keep (2×2)<small>Member Keep</small></button>
+            <button class="tool-btn" data-tool="keep3">Keep (3×3)<small>Member Keep</small></button>
+            <button class="tool-btn" data-tool="warehouse">Warehouse<small>Alliance Bldg</small></button>
+            <button class="tool-btn" data-tool="mine">Alliance Mine<small>Alliance Bldg</small></button>
+            <button class="tool-btn" data-tool="terrain">Blocked (1×1)<small>Node / Terrain</small></button>
+            <button class="tool-btn" data-tool="select">Select / Move<small>Edit Only</small></button>
+          </div>
+        </div>
+
+        <div id="keepOptions">
+          <div class="section-title">2. Member Keep Details</div>
+          <div class="field">
+            <label for="memberNameInput">Player / Keep Name</label>
+            <input type="text" id="memberNameInput" placeholder="Enter member name..." />
+          </div>
+          <div class="field">
+            <label for="memberRankSelect">Rank / Color</label>
+            <select id="memberRankSelect">
+              <option value="Member">Member (Blue)</option>
+              <option value="R5">R5 Leader (Crimson)</option>
+              <option value="R4">R4 Officer (Amber)</option>
+              <option value="Farm">Farm / Alt (Green)</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="allianceBldgOptions" style="display:none;">
+          <div class="section-title">2. Alliance Building Size</div>
+          <div class="field">
+            <label for="bldgSizeSelect">Footprint Size</label>
+            <select id="bldgSizeSelect">
+              <option value="2">2×2</option>
+              <option value="3">3×3</option>
+              <option value="4">4×4</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="bfCastleOptions" style="display:none;">
+          <div class="section-title">BF Centre Castle (Optional)</div>
+          <div style="display:flex; gap:8px;">
+            <button id="addBfCastle2Btn" style="flex:1;">+ 2×2 Castle</button>
+            <button id="addBfCastle4Btn" style="flex:1;">+ 4×4 Castle</button>
+          </div>
+        </div>
+
+        <!-- Inspector -->
+        <div class="inspector-box">
+          <div class="section-title">Selected Item</div>
+          <div id="inspectorEmpty" style="font-size:0.79rem; color:var(--muted); line-height:1.4;">
+            Click any keep or building on the grid to rename, resize, or delete it. Drag to rearrange.
+          </div>
+          <div id="inspectorForm" style="display:none;">
+            <div class="field">
+              <label for="editNameInput">Name / Label</label>
+              <input type="text" id="editNameInput" />
+            </div>
+            <div class="field" id="editSizeWrap">
+              <label for="editSizeSelect">Size</label>
+              <select id="editSizeSelect"></select>
+            </div>
+            <div class="field" id="editRankWrap">
+              <label for="editRankSelect">Rank / Color</label>
+              <select id="editRankSelect">
+                <option value="Member">Member (Blue)</option>
+                <option value="R5">R5 Leader (Crimson)</option>
+                <option value="R4">R4 Officer (Amber)</option>
+                <option value="Farm">Farm / Alt (Green)</option>
+              </select>
+            </div>
+            <div style="display:flex; gap:8px; margin-top:8px;">
+              <button class="gold-btn" id="saveEditBtn" style="flex:1;">Update</button>
+              <button class="danger-btn" id="deleteItemBtn">Delete</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="status-msg" id="statusMsg"></div>
+      </aside>
+
+      <!-- Main Grid Board -->
+      <section class="board-panel">
+        <div class="board-toolbar">
+          <div class="toolbar-group">
+            <span class="dim-label" id="customDimControls" style="display:none;">
+              BF Grid:
+              <input type="number" id="gridCols" min="8" max="50" value="20" /> ×
+              <input type="number" id="gridRows" min="8" max="50" value="20" />
+              <button id="applyDimBtn">Apply</button>
+            </span>
+            <span class="dim-label" id="fixedDimLabel" style="color:var(--gold-bright); font-weight:600;"></span>
+            <span class="dim-label" style="margin-left:6px;">
+              Zoom: <input type="range" id="zoomSlider" min="20" max="42" value="28" />
+            </span>
+          </div>
+
+          <div class="toolbar-group">
+            <select id="copyFromSelect">
+              <option value="">Copy layout from...</option>
+              <option value="lvl13">Standard Hive (Lv 1–3)</option>
+              <option value="lvl4">Chalons / Glory (Lv 4)</option>
+              <option value="lvl5">Upgraded (Lv 5)</option>
+              <option value="bf">BF Hive Plan</option>
+            </select>
+            <button id="copyFromBtn">Copy</button>
+            <button class="danger-btn" id="clearTabBtn">Reset Tab</button>
+          </div>
+        </div>
+
+        <div class="board-scroll">
+          <div class="grid-frame">
+            <div class="axis-x" id="axisX"></div>
+            <div class="axis-y" id="axisY"></div>
+            <div class="grid-canvas" id="gridCanvas">
+              <div class="ghost" id="ghost"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="stats-bar">
+          <div class="stats-group" id="statsGroup"></div>
+          <div id="coordsReadout" style="font-family:monospace; color:var(--gold-bright);">Cursor: (–, –)</div>
+        </div>
+
+        <div class="roster-strip" id="rosterStrip"></div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      const STORAGE_KEY = 'vhm_hive_planner_v1';
+
+      const TAB_PRESETS = {
+        lvl13: {
+          cols: 18, rows: 18, lockedGrid: true,
+          castle: { x: 8, y: 8, size: 2, name: 'Centre Castle' }
+        },
+        lvl4: {
+          cols: 20, rows: 20, lockedGrid: true,
+          castle: { x: 8, y: 8, size: 4, name: 'Chalons / Glory' }
+        },
+        lvl5: {
+          cols: 22, rows: 22, lockedGrid: true,
+          castle: { x: 9, y: 9, size: 4, name: 'Sacred Radiance / Oracle' }
+        },
+        bf: {
+          cols: 20, rows: 20, lockedGrid: false,
+          castle: null
+        }
+      };
+
+      function createDefaultTab(tabId) {
+        const p = TAB_PRESETS[tabId];
+        const items = [];
+        if (p.castle) {
+          items.push({
+            id: 'castle_' + tabId,
+            type: 'castle',
+            x: p.castle.x,
+            y: p.castle.y,
+            size: p.castle.size,
+            name: p.castle.name,
+            locked: true
+          });
+        }
+        return { cols: p.cols, rows: p.rows, items };
+      }
+
+      function createInitialState() {
+        return {
+          activeTab: 'lvl13',
+          cellSize: 28,
+          tabs: {
+            lvl13: createDefaultTab('lvl13'),
+            lvl4: createDefaultTab('lvl4'),
+            lvl5: createDefaultTab('lvl5'),
+            bf: createDefaultTab('bf')
+          }
+        };
+      }
+
+      let state = loadState();
+      let activeTool = 'keep2';
+      let selectedId = null;
+      let dragState = null;
+
+      // DOM refs
+      const tabsBar = document.getElementById('tabsBar');
+      const customDimControls = document.getElementById('customDimControls');
+      const fixedDimLabel = document.getElementById('fixedDimLabel');
+      const gridColsInput = document.getElementById('gridCols');
+      const gridRowsInput = document.getElementById('gridRows');
+      const zoomSlider = document.getElementById('zoomSlider');
+      const toolList = document.getElementById('toolList');
+      const keepOptions = document.getElementById('keepOptions');
+      const allianceBldgOptions = document.getElementById('allianceBldgOptions');
+      const bfCastleOptions = document.getElementById('bfCastleOptions');
+      const memberNameInput = document.getElementById('memberNameInput');
+      const memberRankSelect = document.getElementById('memberRankSelect');
+      const bldgSizeSelect = document.getElementById('bldgSizeSelect');
+
+      const inspectorEmpty = document.getElementById('inspectorEmpty');
+      const inspectorForm = document.getElementById('inspectorForm');
+      const editNameInput = document.getElementById('editNameInput');
+      const editSizeWrap = document.getElementById('editSizeWrap');
+      const editSizeSelect = document.getElementById('editSizeSelect');
+      const editRankWrap = document.getElementById('editRankWrap');
+      const editRankSelect = document.getElementById('editRankSelect');
+      const saveEditBtn = document.getElementById('saveEditBtn');
+      const deleteItemBtn = document.getElementById('deleteItemBtn');
+
+      const coordsReadout = document.getElementById('coordsReadout');
+      const axisX = document.getElementById('axisX');
+      const axisY = document.getElementById('axisY');
+      const gridCanvas = document.getElementById('gridCanvas');
+      const ghost = document.getElementById('ghost');
+      const statsGroup = document.getElementById('statsGroup');
+      const rosterStrip = document.getElementById('rosterStrip');
+      const statusMsg = document.getElementById('statusMsg');
+
+      function setStatus(msg) {
+        statusMsg.textContent = msg;
+        clearTimeout(setStatus._t);
+        setStatus._t = setTimeout(() => { statusMsg.textContent = ''; }, 3000);
+      }
+
+      function saveState() {
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
+      }
+
+      function loadState() {
+        if (location.hash.startsWith('#plan=')) {
+          try {
+            const json = decodeURIComponent(escape(atob(location.hash.slice(6))));
+            const parsed = JSON.parse(json);
+            if (parsed && parsed.tabs && parsed.tabs.lvl13) return parsed;
+          } catch (e) {}
+        }
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (parsed && parsed.tabs && parsed.tabs.lvl13) return parsed;
+          }
+        } catch (e) {}
+        return createInitialState();
+      }
+
+      function currentTab() { return state.tabs[state.activeTab]; }
+      function uid() { return 'b_' + Math.random().toString(36).slice(2, 9); }
+
+      function canPlace(x, y, size, ignoreId = null) {
+        const tab = currentTab();
+        if (x < 0 || y < 0 || x + size > tab.cols || y + size > tab.rows) return false;
+        for (const item of tab.items) {
+          if (item.id === ignoreId) continue;
+          const overlap = !(
+            x + size <= item.x || item.x + item.size <= x ||
+            y + size <= item.y || item.y + item.size <= y
+          );
+          if (overlap) return false;
+        }
+        return true;
+      }
+
+      function getToolFootprint() {
+        if (activeTool === 'keep2') return 2;
+        if (activeTool === 'keep3') return 3;
+        if (activeTool === 'warehouse' || activeTool === 'mine') return parseInt(bldgSizeSelect.value, 10);
+        if (activeTool === 'terrain') return 1;
+        return 0;
+      }
+
+      function render() {
+        const tabId = state.activeTab;
+        const tab = currentTab();
+        const preset = TAB_PRESETS[tabId];
+        const cell = state.cellSize;
+
+        document.documentElement.style.setProperty('--cell', cell + 'px');
+        zoomSlider.value = cell;
+
+        tabsBar.querySelectorAll('.tab-btn').forEach(btn => {
+          btn.classList.toggle('active', btn.dataset.tab === tabId);
+        });
+
+        if (preset.lockedGrid) {
+          customDimControls.style.display = 'none';
+          fixedDimLabel.style.display = 'inline';
+          fixedDimLabel.textContent = `${tab.cols}×${tab.rows} Grid • Centre Castle ${preset.castle.size}×${preset.castle.size}`;
+          bfCastleOptions.style.display = 'none';
+        } else {
+          customDimControls.style.display = 'flex';
+          fixedDimLabel.style.display = 'none';
+          gridColsInput.value = tab.cols;
+          gridRowsInput.value = tab.rows;
+          bfCastleOptions.style.display = 'block';
+        }
+
+        gridCanvas.style.width = (tab.cols * cell) + 'px';
+        gridCanvas.style.height = (tab.rows * cell) + 'px';
+
+        axisX.innerHTML = '';
+        for (let c = 1; c <= tab.cols; c++) {
+          const d = document.createElement('div');
+          d.className = 'axis-cell';
+          d.textContent = c;
+          axisX.appendChild(d);
+        }
+        axisY.innerHTML = '';
+        for (let r = 1; r <= tab.rows; r++) {
+          const d = document.createElement('div');
+          d.className = 'axis-cell';
+          d.textContent = r;
+          axisY.appendChild(d);
+        }
+
+        gridCanvas.querySelectorAll('.building').forEach(el => el.remove());
+
+        let keeps2 = 0, keeps3 = 0, warehouses = 0, mines = 0, usedTiles = 0;
+        const rosterItems = [];
+
+        for (const item of tab.items) {
+          usedTiles += item.size * item.size;
+          if (item.type === 'keep') {
+            item.size === 2 ? keeps2++ : keeps3++;
+            rosterItems.push(item);
+          }
+          if (item.type === 'warehouse') { warehouses++; rosterItems.push(item); }
+          if (item.type === 'mine') { mines++; rosterItems.push(item); }
+
+          const el = document.createElement('div');
+          el.className = `building type-${item.type}`;
+          if (item.type === 'keep') el.classList.add(`rank-${item.rank || 'Member'}`);
+          if (item.locked) el.classList.add('locked');
+          if (item.id === selectedId) el.classList.add('selected');
+
+          el.style.left = (item.x * cell) + 'px';
+          el.style.top = (item.y * cell) + 'px';
+          el.style.width = (item.size * cell) + 'px';
+          el.style.height = (item.size * cell) + 'px';
+          el.dataset.id = item.id;
+
+          if (item.type !== 'terrain') {
+            const nameEl = document.createElement('div');
+            nameEl.className = 'b-name';
+            nameEl.textContent = item.name || item.type;
+            const metaEl = document.createElement('div');
+            metaEl.className = 'b-meta';
+            metaEl.textContent = `${item.size}×${item.size}` + (item.type === 'keep' ? ` • ${item.rank}` : '');
+            el.appendChild(nameEl);
+            el.appendChild(metaEl);
+          }
+
+          el.addEventListener('pointerdown', (e) => onBuildingPointerDown(e, item));
+          gridCanvas.appendChild(el);
+        }
+
+        const totalTiles = tab.cols * tab.rows;
+        statsGroup.innerHTML = `
+          <span><strong>Keeps:</strong> ${keeps2 + keeps3} (${keeps2}×2×2, ${keeps3}×3×3)</span>
+          <span><strong>Warehouse:</strong> ${warehouses}</span>
+          <span><strong>Mine:</strong> ${mines}</span>
+          <span><strong>Free Tiles:</strong> ${totalTiles - usedTiles} / ${totalTiles}</span>
+        `;
+
+        rosterStrip.innerHTML = '';
+        if (rosterItems.length) {
+          const label = document.createElement('span');
+          label.style.fontSize = '0.75rem';
+          label.style.color = 'var(--muted)';
+          label.textContent = 'Placed Roster:';
+          rosterStrip.appendChild(label);
+
+          for (const r of rosterItems) {
+            const chip = document.createElement('button');
+            chip.className = 'roster-chip' + (r.id === selectedId ? ' active' : '');
+            chip.textContent = `${r.name} (${r.size}×${r.size})`;
+            chip.addEventListener('click', () => {
+              selectedId = r.id;
+              render();
+            });
+            rosterStrip.appendChild(chip);
+          }
+        }
+
+        renderInspector();
+        saveState();
+      }
+
+      function renderInspector() {
+        const item = currentTab().items.find(i => i.id === selectedId);
+        if (!item) {
+          inspectorEmpty.style.display = 'block';
+          inspectorForm.style.display = 'none';
+          return;
+        }
+        inspectorEmpty.style.display = 'none';
+        inspectorForm.style.display = 'block';
+
+        editNameInput.value = item.name || '';
+        editNameInput.disabled = item.type === 'terrain';
+
+        const isKeep = item.type === 'keep';
+        const isAlliance = item.type === 'warehouse' || item.type === 'mine';
+        editSizeWrap.style.display = (isKeep || isAlliance) ? 'flex' : 'none';
+        editRankWrap.style.display = isKeep ? 'flex' : 'none';
+
+        if (isKeep || isAlliance) {
+          editSizeSelect.innerHTML = isKeep
+            ? '<option value="2">2×2</option><option value="3">3×3</option>'
+            : '<option value="2">2×2</option><option value="3">3×3</option><option value="4">4×4</option>';
+          editSizeSelect.value = String(item.size);
+        }
+        if (isKeep) editRankSelect.value = item.rank || 'Member';
+
+        deleteItemBtn.style.display = item.locked ? 'none' : 'inline-block';
+      }
+
+      function getGridCoords(clientX, clientY) {
+        const rect = gridCanvas.getBoundingClientRect();
+        return {
+          x: Math.floor((clientX - rect.left) / state.cellSize),
+          y: Math.floor((clientY - rect.top) / state.cellSize)
+        };
+      }
+
+      function showGhost(x, y, size, valid) {
+        const cell = state.cellSize;
+        ghost.style.display = 'block';
+        ghost.style.left = (x * cell) + 'px';
+        ghost.style.top = (y * cell) + 'px';
+        ghost.style.width = (size * cell) + 'px';
+        ghost.style.height = (size * cell) + 'px';
+        ghost.classList.toggle('invalid', !valid);
+      }
+
+      function onBuildingPointerDown(e, item) {
+        e.stopPropagation();
+        selectedId = item.id;
+        renderInspector();
+
+        gridCanvas.querySelectorAll('.building').forEach(b => {
+          b.classList.toggle('selected', b.dataset.id === selectedId);
+        });
+        rosterStrip.querySelectorAll('.roster-chip').forEach((c, idx) => {
+          // re-sync quickly on drop or click
+        });
+
+        if (item.locked) return;
+
+        const pos = getGridCoords(e.clientX, e.clientY);
+        dragState = {
+          id: item.id,
+          size: item.size,
+          offsetX: Math.max(0, Math.min(item.size - 1, pos.x - item.x)),
+          offsetY: Math.max(0, Math.min(item.size - 1, pos.y - item.y)),
+          targetX: item.x,
+          targetY: item.y,
+          valid: true
+        };
+        gridCanvas.setPointerCapture(e.pointerId);
+      }
+
+      gridCanvas.addEventListener('pointerdown', (e) => {
+        if (e.target !== gridCanvas) return;
+        const size = getToolFootprint();
+        if (size === 0) {
+          selectedId = null;
+          render();
+          return;
+        }
+        const { x, y } = getGridCoords(e.clientX, e.clientY);
+        if (!canPlace(x, y, size)) {
+          setStatus('Space is blocked or out of bounds.');
+          return;
+        }
+
+        const tab = currentTab();
+        const newItem = { id: uid(), x, y, size };
+
+        if (activeTool === 'keep2' || activeTool === 'keep3') {
+          const count = tab.items.filter(i => i.type === 'keep').length + 1;
+          newItem.type = 'keep';
+          newItem.name = memberNameInput.value.trim() || `Member ${count}`;
+          newItem.rank = memberRankSelect.value;
+          memberNameInput.value = '';
+        } else if (activeTool === 'warehouse') {
+          newItem.type = 'warehouse';
+          newItem.name = 'Alliance Warehouse';
+        } else if (activeTool === 'mine') {
+          newItem.type = 'mine';
+          newItem.name = 'Alliance Mine';
+        } else if (activeTool === 'terrain') {
+          newItem.type = 'terrain';
+          newItem.name = 'Blocked';
+        }
+
+        tab.items.push(newItem);
+        selectedId = newItem.id;
+        render();
+      });
+
+      gridCanvas.addEventListener('pointermove', (e) => {
+        const { x, y } = getGridCoords(e.clientX, e.clientY);
+        const tab = currentTab();
+        coordsReadout.textContent = (x >= 0 && y >= 0 && x < tab.cols && y < tab.rows)
+          ? `Cursor: (${x + 1}, ${y + 1})`
+          : 'Cursor: (–, –)';
+
+        if (dragState) {
+          const tx = x - dragState.offsetX;
+          const ty = y - dragState.offsetY;
+          const valid = canPlace(tx, ty, dragState.size, dragState.id);
+          dragState.targetX = tx;
+          dragState.targetY = ty;
+          dragState.valid = valid;
+          showGhost(tx, ty, dragState.size, valid);
+          return;
+        }
+
+        const size = getToolFootprint();
+        if (size > 0 && x >= 0 && y >= 0 && x < tab.cols && y < tab.rows) {
+          showGhost(x, y, size, canPlace(x, y, size));
+        } else {
+          ghost.style.display = 'none';
+        }
+      });
+
+      gridCanvas.addEventListener('pointerup', () => {
+        if (!dragState) return;
+        const item = currentTab().items.find(i => i.id === dragState.id);
+        if (item && dragState.valid) {
+          item.x = dragState.targetX;
+          item.y = dragState.targetY;
+        } else if (!dragState.valid) {
+          setStatus('Cannot drop there — space is occupied.');
+        }
+        dragState = null;
+        ghost.style.display = 'none';
+        render();
+      });
+
+      gridCanvas.addEventListener('pointerleave', () => {
+        if (!dragState) ghost.style.display = 'none';
+        coordsReadout.textContent = 'Cursor: (–, –)';
+      });
+
+      // Tabs
+      tabsBar.addEventListener('click', (e) => {
+        const btn = e.target.closest('.tab-btn');
+        if (!btn) return;
+        state.activeTab = btn.dataset.tab;
+        selectedId = null;
+        render();
+      });
+
+      // Tools
+      toolList.addEventListener('click', (e) => {
+        const btn = e.target.closest('.tool-btn');
+        if (!btn) return;
+        activeTool = btn.dataset.tool;
+        toolList.querySelectorAll('.tool-btn').forEach(b => b.classList.toggle('active', b === btn));
+        keepOptions.style.display = (activeTool === 'keep2' || activeTool === 'keep3') ? 'block' : 'none';
+        allianceBldgOptions.style.display = (activeTool === 'warehouse' || activeTool === 'mine') ? 'block' : 'none';
+      });
+
+      // Zoom
+      zoomSlider.addEventListener('input', () => {
+        state.cellSize = parseInt(zoomSlider.value, 10);
+        render();
+      });
+
+      // Custom BF Grid Size
+      document.getElementById('applyDimBtn').addEventListener('click', () => {
+        if (state.activeTab !== 'bf') return;
+        const cols = Math.max(8, Math.min(50, parseInt(gridColsInput.value, 10) || 20));
+        const rows = Math.max(8, Math.min(50, parseInt(gridRowsInput.value, 10) || 20));
+        const tab = currentTab();
+        tab.cols = cols;
+        tab.rows = rows;
+        tab.items = tab.items.filter(i => i.x + i.size <= cols && i.y + i.size <= rows);
+        setStatus(`BF grid set to ${cols}×${rows}.`);
+        render();
+      });
+
+      function addBfCastle(size) {
+        if (state.activeTab !== 'bf') return;
+        const tab = currentTab();
+        const cx = Math.floor((tab.cols - size) / 2);
+        const cy = Math.floor((tab.rows - size) / 2);
+        if (!canPlace(cx, cy, size)) {
+          setStatus('Clear the centre space first to place a castle.');
+          return;
+        }
+        const item = { id: uid(), type: 'castle', x: cx, y: cy, size, name: 'BF Castle', locked: false };
+        tab.items.push(item);
+        selectedId = item.id;
+        render();
+      }
+      document.getElementById('addBfCastle2Btn').addEventListener('click', () => addBfCastle(2));
+      document.getElementById('addBfCastle4Btn').addEventListener('click', () => addBfCastle(4));
+
+      // Inspector Update / Delete
+      saveEditBtn.addEventListener('click', () => {
+        const item = currentTab().items.find(i => i.id === selectedId);
+        if (!item) return;
+
+        if (item.type === 'keep' || item.type === 'warehouse' || item.type === 'mine') {
+          const newSize = parseInt(editSizeSelect.value, 10);
+          if (newSize !== item.size && !canPlace(item.x, item.y, newSize, item.id)) {
+            setStatus(`Cannot resize to ${newSize}×${newSize} — space blocked.`);
+            return;
+          }
+          item.size = newSize;
+        }
+        if (item.type !== 'terrain') item.name = editNameInput.value.trim() || item.name;
+        if (item.type === 'keep') item.rank = editRankSelect.value;
+
+        setStatus('Updated.');
+        render();
+      });
+
+      deleteItemBtn.addEventListener('click', () => {
+        const tab = currentTab();
+        const item = tab.items.find(i => i.id === selectedId);
+        if (!item || item.locked) return;
+        tab.items = tab.items.filter(i => i.id !== selectedId);
+        selectedId = null;
+        render();
+      });
+
+      // Copy Layout
+      document.getElementById('copyFromBtn').addEventListener('click', () => {
+        const srcId = document.getElementById('copyFromSelect').value;
+        if (!srcId || srcId === state.activeTab) return;
+        const src = state.tabs[srcId];
+        const dest = currentTab();
+        const castle = dest.items.find(i => i.type === 'castle' && i.locked);
+        dest.items = castle ? [castle] : [];
+
+        let skipped = 0;
+        for (const item of src.items) {
+          if (item.type === 'castle' && item.locked) continue;
+          if (canPlace(item.x, item.y, item.size)) {
+            dest.items.push({ ...item, id: uid(), locked: false });
+          } else {
+            skipped++;
+          }
+        }
+        setStatus(skipped ? `Copied (${skipped} skipped due to overlap/size).` : 'Layout copied!');
+        render();
+      });
+
+      // Reset Tab
+      document.getElementById('clearTabBtn').addEventListener('click', () => {
+        if (!confirm('Reset all placed keeps and buildings on this tab?')) return;
+        state.tabs[state.activeTab] = createDefaultTab(state.activeTab);
+        selectedId = null;
+        render();
+      });
+
+      // Custom Logo File Picker
+      const logoFileInput = document.getElementById('logoFileInput');
+      document.getElementById('setLogoBtn').addEventListener('click', () => logoFileInput.click());
+      logoFileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const url = URL.createObjectURL(file);
+        document.documentElement.style.setProperty('--vhm-logo', `url('${url}')`);
+        setStatus('Logo applied!');
+      });
+
+      // Share / Export / Import
+      document.getElementById('shareBtn').addEventListener('click', async () => {
+        const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(state))));
+        const url = location.href.split('#')[0] + '#plan=' + encoded;
+        history.replaceState(null, '', '#plan=' + encoded);
+        try {
+          await navigator.clipboard.writeText(url);
+          setStatus('Share link copied to clipboard!');
+        } catch (e) {
+          prompt('Copy this share link:', url);
+        }
+      });
+
+      document.getElementById('exportBtn').addEventListener('click', () => {
+        const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'vhm-hive-plans.json';
+        a.click();
+      });
+
+      document.getElementById('importBtn').addEventListener('click', () => {
+        const raw = prompt('Paste exported JSON layout here:');
+        if (!raw) return;
+        try {
+          const parsed = JSON.parse(raw);
+          if (!parsed.tabs || !parsed.tabs.lvl13) throw new Error();
+          state = parsed;
+          selectedId = null;
+          setStatus('Layout imported!');
+          render();
+        } catch (e) {
+          alert('Invalid JSON layout data.');
+        }
+      });
+
+      render();
+    })();
+  </script>
+</body>
+</html>
