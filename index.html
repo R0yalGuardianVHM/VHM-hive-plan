@@ -82,16 +82,15 @@
     .brand-box { display: flex; align-items: center; gap: 12px; }
 
     .brand-crest {
-      width: 52px;
-      height: 52px;
+      width: 56px;
+      height: 56px;
       border-radius: 50%;
       border: 2px solid var(--gold);
       background-color: #0b0b0f;
-      background-image: var(--vhm-logo);
-      background-size: cover;
-      background-position: center;
+      object-fit: cover;
       box-shadow: 0 0 16px rgba(212, 175, 55, 0.35);
       flex-shrink: 0;
+      display: block;
     }
 
     .brand-title h1 {
@@ -477,7 +476,6 @@
       background: rgba(212, 175, 55, 0.22);
     }
 
-    /* Mobile / Tablet Responsive */
     @media (max-width: 920px) {
       body { padding: 10px; }
       .workspace { flex-direction: column; }
@@ -491,15 +489,13 @@
   <div id="vhm-planner-app">
     <header class="vhm-header">
       <div class="brand-box">
-        <div class="brand-crest" title="VHM Alliance Crest"></div>
+        <img id="brandCrest" class="brand-crest" src="vhm-logo.png" alt="VHM Alliance Crest" />
         <div class="brand-title">
           <h1>VHM Hive Planner</h1>
           <p>Virtus Humilis • Alliance Tactical Layout</p>
         </div>
       </div>
       <div class="header-actions">
-        <input type="file" id="logoFileInput" accept="image/*" style="display:none;" />
-        <button id="setLogoBtn">Set Logo</button>
         <button class="gold-btn" id="shareBtn">Copy Share Link</button>
         <button id="exportBtn">Export JSON</button>
         <button id="importBtn">Import JSON</button>
@@ -668,6 +664,20 @@
 
   <script>
     (() => {
+      // Auto-detect logo image file format (.png, .jpg, .jpeg, .webp) & sync background
+      const crestImg = document.getElementById('brandCrest');
+      const logoCandidates = ['vhm-logo.png', 'vhm-logo.jpg', 'vhm-logo.jpeg', 'vhm-logo.webp'];
+      let logoTryIdx = 0;
+      crestImg.addEventListener('load', () => {
+        document.documentElement.style.setProperty('--vhm-logo', `url('${crestImg.getAttribute('src')}')`);
+      });
+      crestImg.addEventListener('error', () => {
+        logoTryIdx++;
+        if (logoTryIdx < logoCandidates.length) {
+          crestImg.src = logoCandidates[logoTryIdx];
+        }
+      });
+
       const STORAGE_KEY = 'vhm_hive_planner_v2';
 
       const TAB_PRESETS = {
@@ -710,7 +720,6 @@
       let panState = null;
       let tapStart = null;
 
-      // DOM refs
       const tabsBar = document.getElementById('tabsBar');
       const customDimControls = document.getElementById('customDimControls');
       const fixedDimLabel = document.getElementById('fixedDimLabel');
@@ -929,7 +938,6 @@
             chip.addEventListener('click', () => {
               selectedId = r.id;
               render();
-              // Center view on selected building if zoomed in
               boardScroll.scrollTo({
                 left: Math.max(0, r.x * cell - boardScroll.clientWidth / 2 + (r.size * cell) / 2),
                 top: Math.max(0, r.y * cell - boardScroll.clientHeight / 2 + (r.size * cell) / 2),
@@ -1009,7 +1017,6 @@
       function onBuildingPointerDown(e, item) {
         e.stopPropagation();
 
-        // Right/middle mouse click or Pan mode -> pan instead of dragging building
         if (e.button === 1 || e.button === 2 || activeTool === 'pan') {
           startPan(e, item.id);
           return;
@@ -1046,7 +1053,6 @@
           return;
         }
         if (e.target !== gridCanvas) return;
-        // Record tap start (place on pointerup only if user didn't swipe/scroll)
         tapStart = { pointerId: e.pointerId, x: e.clientX, y: e.clientY };
       });
 
@@ -1062,7 +1068,7 @@
 
         if (tapStart && e.pointerId === tapStart.pointerId) {
           if (Math.hypot(e.clientX - tapStart.x, e.clientY - tapStart.y) > 8) {
-            tapStart = null; // User is scrolling/swiping
+            tapStart = null;
           }
         }
       });
@@ -1086,7 +1092,6 @@
           return;
         }
 
-        // Hover preview on desktop mouse only
         if (e.pointerType === 'mouse') {
           const size = getToolFootprint();
           if (size > 0 && x >= 0 && y >= 0 && x < tab.cols && y < tab.rows) {
@@ -1177,7 +1182,6 @@
         coordsReadout.textContent = 'Cursor: (–, –)';
       });
 
-      // Tabs
       tabsBar.addEventListener('click', (e) => {
         const btn = e.target.closest('.tab-btn');
         if (!btn) return;
@@ -1186,7 +1190,6 @@
         render();
       });
 
-      // Tools
       toolList.addEventListener('click', (e) => {
         const btn = e.target.closest('.tool-btn');
         if (!btn) return;
@@ -1198,7 +1201,6 @@
         ghost.style.display = 'none';
       });
 
-      // Zoom controls
       zoomSlider.addEventListener('input', () => setCellSize(parseInt(zoomSlider.value, 10), true));
       document.getElementById('zoomOutBtn').addEventListener('click', () => setCellSize(state.cellSize - 4, true));
       document.getElementById('zoomInBtn').addEventListener('click', () => setCellSize(state.cellSize + 4, true));
@@ -1207,7 +1209,6 @@
         boardScroll.scrollTo({ left: 0, top: 0 });
       });
 
-      // BF Custom Dimensions
       document.getElementById('applyDimBtn').addEventListener('click', () => {
         if (state.activeTab !== 'bf') return;
         const cols = Math.max(8, Math.min(50, parseInt(gridColsInput.value, 10) || 20));
@@ -1237,7 +1238,6 @@
       document.getElementById('addBfCastle2Btn').addEventListener('click', () => addBfCastle(2));
       document.getElementById('addBfCastle4Btn').addEventListener('click', () => addBfCastle(4));
 
-      // Inspector
       saveEditBtn.addEventListener('click', () => {
         const item = currentTab().items.find(i => i.id === selectedId);
         if (!item) return;
@@ -1266,7 +1266,6 @@
         render();
       });
 
-      // Copy & Reset
       document.getElementById('copyFromBtn').addEventListener('click', () => {
         const srcId = document.getElementById('copyFromSelect').value;
         if (!srcId || srcId === state.activeTab) return;
@@ -1295,18 +1294,6 @@
         render();
       });
 
-      // Logo Picker
-      const logoFileInput = document.getElementById('logoFileInput');
-      document.getElementById('setLogoBtn').addEventListener('click', () => logoFileInput.click());
-      logoFileInput.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        const url = URL.createObjectURL(file);
-        document.documentElement.style.setProperty('--vhm-logo', `url('${url}')`);
-        setStatus('Logo applied!');
-      });
-
-      // Share / Export / Import
       document.getElementById('shareBtn').addEventListener('click', async () => {
         const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(state))));
         const url = location.href.split('#')[0] + '#plan=' + encoded;
